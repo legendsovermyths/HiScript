@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     error::ErrorManager,
-    lexer::Lexer,
+    lexer::Lexer, parser::Parser,
 };
 pub struct HiScript {}
 
@@ -18,8 +18,12 @@ impl HiScript {
     pub fn run(&self, source: String) {
         let mut error_manager = ErrorManager::new();
         let mut lexer = Lexer::new(&source, &mut error_manager);
-        lexer.scan_tokens();
+        let tokens = lexer.scan_tokens();
         lexer.print_tokens();
+        println!();
+        let mut parser = Parser::new(tokens, &mut error_manager);
+        let result = parser.parse();
+        println!("{:?}",result);
         error_manager.report_errors();
     }
     pub fn run_file(self, path: &String) -> Result<(), Box<dyn Error>> {

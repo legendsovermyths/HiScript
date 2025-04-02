@@ -4,6 +4,8 @@ mod token_type;
 mod literal;
 mod lexer;
 mod error;
+mod expr;
+mod parser;
 use std::error::Error;
 
 use crate::hiscript::HiScript;
