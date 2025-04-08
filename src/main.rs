@@ -6,6 +6,7 @@ mod lexer;
 mod error;
 mod expr;
 mod parser;
+mod interpreter;
 use std::error::Error;
 
 use crate::hiscript::HiScript;

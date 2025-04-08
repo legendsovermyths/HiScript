@@ -78,10 +78,10 @@ impl<'a> Lexer<'a> {
     fn match_string(&mut self) {
         while let Some((index, curr_char)) = self.iter.peek() {
             if *curr_char == '"' {
-                let string_literal = self.source[(self.current + 1)..(*index)].to_string();
+                let string_literal = self.source[(self.start + 1)..(*index)].to_string();
+                self.current = *index;
                 self.add_token(TokenType::STRING, Some(Literal::String(string_literal)));
-                let (index, _) = self.iter.next().unwrap();
-                self.current = index;
+                self.iter.next().unwrap();
                 return;
             } else if *curr_char == '\n' {
                 self.line += 1;
@@ -185,6 +185,8 @@ impl<'a> Lexer<'a> {
                 '%' => self.add_token(TokenType::MODULO, None),
                 '&' => self.add_token(TokenType::AMPERSAND, None),
                 '|' => self.add_token(TokenType::PIPE, None),
+                '?' => self.add_token(TokenType::QUESTION, None),
+                ':' => self.add_token(TokenType::COLON, None),
                 '!' => {
                     if self.does_match('=') {
                         self.add_token(TokenType::BANGEQUAL, None)

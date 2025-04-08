@@ -25,8 +25,29 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
-        let result = self.equality()?;
+        let result = self.block()?;
         return Ok(result);
+    }
+
+    fn block(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
+        let mut expr = self.ternary()?;
+        while self.does_match(vec![TokenType::COMMA]) {
+            let operator = self.previous().clone();
+            let right = self.ternary()?;
+            expr = Box::new(Expr::Binary(expr, operator, right));
+        }
+        Ok(expr)
+    }
+
+    fn ternary(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
+        let mut expr = self.equality()?;
+        if self.does_match(vec![TokenType::QUESTION]) {
+            let expr_then = self.ternary()?;
+            self.consume(TokenType::COLON, "Expected ':' in ternay operation");
+            let expr_else = self.ternary()?;
+            expr = Box::new(Expr::Ternary(expr, expr_then, expr_else));
+        }
+        return Ok(expr);
     }
 
     fn equality(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
@@ -85,8 +106,18 @@ impl<'a> Parser<'a> {
     }
 
     fn factor(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
+        let mut expr = self.modulo()?;
+        while self.does_match(vec![TokenType::SLASH, TokenType::STAR]) {
+            let operator = self.previous().clone();
+            let right = self.modulo()?;
+            expr = Box::new(Expr::Binary(expr, operator, right));
+        }
+        return Ok(expr);
+    }
+
+    fn modulo(&mut self) -> Result<Box<Expr>, Box<dyn Error>> {
         let mut expr = self.unary()?;
-        while self.does_match(vec![TokenType::SLASH, TokenType::STAR, TokenType::MODULO]) {
+        while self.does_match(vec![TokenType::MODULO]) {
             let operator = self.previous().clone();
             let right = self.unary()?;
             expr = Box::new(Expr::Binary(expr, operator, right));
@@ -115,7 +146,6 @@ impl<'a> Parser<'a> {
             TokenType::INTEGER,
             TokenType::FLOAT,
         ]) {
-            println!("{:?}", self.peek());
             return Ok(Box::new(Expr::Literal(
                 self.previous().literal.clone().unwrap(),
             )));
@@ -124,6 +154,7 @@ impl<'a> Parser<'a> {
             self.consume(TokenType::RIGHTPAREN, "Expected ')' after expression");
             return Ok(Box::new(Expr::Grouping(expr)));
         }
+        self.report_error("Expected an expression");
         return Err("Expected an expression".into());
     }
 

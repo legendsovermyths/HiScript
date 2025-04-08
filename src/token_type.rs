@@ -15,6 +15,8 @@ pub enum TokenType {
     PIPE,
     XOR,
     MODULO,
+    QUESTION,
+    COLON,
 
     BANG,
     BANGEQUAL,

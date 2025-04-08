@@ -4,10 +4,7 @@ use std::{
     io::{stdin, stdout, Write},
 };
 
-use crate::{
-    error::ErrorManager,
-    lexer::Lexer, parser::Parser,
-};
+use crate::{error::ErrorManager, interpreter::Interpreter, lexer::Lexer, parser::Parser};
 pub struct HiScript {}
 
 impl HiScript {
@@ -19,11 +16,20 @@ impl HiScript {
         let mut error_manager = ErrorManager::new();
         let mut lexer = Lexer::new(&source, &mut error_manager);
         let tokens = lexer.scan_tokens();
-        lexer.print_tokens();
-        println!();
         let mut parser = Parser::new(tokens, &mut error_manager);
         let result = parser.parse();
-        println!("{:?}",result);
+        let mut interpreter = Interpreter::new(&mut error_manager);
+        match result {
+            Some(expr)=>{
+                let literal = interpreter.interpret(expr);
+                if let Some(val) = literal{
+                    val.print();
+                }
+            }
+            None=>{
+
+            }
+        }
         error_manager.report_errors();
     }
     pub fn run_file(self, path: &String) -> Result<(), Box<dyn Error>> {
@@ -38,10 +44,10 @@ impl HiScript {
             let _ = stdout().flush();
             let mut line = String::new();
             let bytes_read = stdin().read_line(&mut line)?;
-            self.run(line);
             if bytes_read == 0 {
                 break;
             }
+            self.run(line);
         }
         return Ok(());
     }
